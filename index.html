@@ -1,0 +1,161 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #222;
+            color: #fff;
+        }
+
+        #gameCanvas {
+            border: 2px solid #4caf50;
+            background-color: #000;
+        }
+
+        #score {
+            font-size: 1.5em;
+            margin: 10px;
+        }
+
+        #controls {
+            margin: 10px;
+        }
+
+        button {
+            padding: 5px 10px;
+            font-size: 1em;
+            margin: 5px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+
+        button.theme-toggle {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        button.theme-toggle.dark {
+            background-color: #222;
+            color: #fff;
+            border: 1px solid white;
+        }
+    </style>
+</head>
+<body>
+    <div id="score">Score: 0</div>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <div id="controls">
+        <button id="themeToggle" class="theme-toggle">Toggle Theme</button>
+    </div>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const scoreDisplay = document.getElementById("score");
+        const themeToggle = document.getElementById("themeToggle");
+
+        let snake = [{ x: 5, y: 5 }];
+        let direction = { x: 0, y: 0 };
+        let food = spawnFood();
+        let score = 0;
+        let speed = 200;
+        let interval;
+
+        function startGame() {
+            clearInterval(interval);
+            interval = setInterval(() => {
+                update();
+                draw();
+            }, speed);
+        }
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowUp" && direction.y === 0) direction = { x: 0, y: -1 };
+            if (e.key === "ArrowDown" && direction.y === 0) direction = { x: 0, y: 1 };
+            if (e.key === "ArrowLeft" && direction.x === 0) direction = { x: -1, y: 0 };
+            if (e.key === "ArrowRight" && direction.x === 0) direction = { x: 1, y: 0 };
+        });
+
+        function update() {
+            if (direction.x === 0 && direction.y === 0) return;
+
+            const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
+
+            // Check collisions
+            if (head.x < 0 || head.x >= 20 || head.y < 0 || head.y >= 20 || isColliding(head)) {
+                alert("Game Over! Your score: " + score);
+                resetGame();
+                return;
+            }
+
+            snake.unshift(head);
+
+            if (head.x === food.x && head.y === food.y) {
+                score++;
+                speed = Math.max(50, speed - 10);
+                startGame();
+                scoreDisplay.textContent = "Score: " + score;
+                food = spawnFood();
+            } else {
+                snake.pop();
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw snake
+            ctx.fillStyle = "#4CAF50";
+            snake.forEach((segment) => {
+                ctx.fillRect(segment.x * 20, segment.y * 20, 20, 20);
+            });
+
+            // Draw food
+            ctx.fillStyle = "red";
+            ctx.fillRect(food.x * 20, food.y * 20, 20, 20);
+        }
+
+        function spawnFood() {
+            let food;
+            do {
+                food = { x: Math.floor(Math.random() * 20), y: Math.floor(Math.random() * 20) };
+            } while (isColliding(food));
+            return food;
+        }
+
+        function isColliding(position) {
+            return snake.some((segment) => segment.x === position.x && segment.y === position.y);
+        }
+
+        function resetGame() {
+            snake = [{ x: 5, y: 5 }];
+            direction = { x: 0, y: 0 };
+            food = spawnFood();
+            score = 0;
+            speed = 200;
+            scoreDisplay.textContent = "Score: " + score;
+            startGame();
+        }
+
+        themeToggle.addEventListener("click", () => {
+            const isDark = document.body.style.backgroundColor === "rgb(255, 255, 255)";
+            document.body.style.backgroundColor = isDark ? "#222" : "white";
+            document.body.style.color = isDark ? "#fff" : "#000";
+            themeToggle.classList.toggle("dark", !isDark);
+            themeToggle.textContent = isDark ? "Toggle Theme" : "Toggle Theme";
+        });
+
+        resetGame();
+    </script>
+</body>
+</html>
